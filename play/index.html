@@ -8712,7 +8712,7 @@ function loadModel(k){const M=MODELS[k],URL=M.url;if(M.state||!T.GLTFLoader||!T.
       for(const c of people.values())c.lk='';if(pv&&pv.L){pv.lk='';preview(pv.L,pv.mode)}if(SCREEN==='title')titleScreen()};
     // a .json holds the same .glb as base64, for hosts that only serve web data types; its pictures are decoded
     // straight from memory (createImageBitmap), so a page policy that blocks blob: addresses can't stop them
-    if(/\.json$/.test(URL))fetch(URL).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json()}).then(j=>{const b=atob(j.glb),u=new Uint8Array(b.length);
+    const fromB64=b64=>{const b=atob(b64),u=new Uint8Array(b.length);
       for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);const ld=new T.GLTFLoader();
       if(typeof createImageBitmap==='function')ld.register(parser=>{const orig=parser.loadImageSource.bind(parser);
         parser.loadImageSource=function(si,l){const d=parser.json.images[si];if(d.bufferView===undefined)return orig(si,l);
@@ -8720,7 +8720,9 @@ function loadModel(k){const M=MODELS[k],URL=M.url;if(M.state||!T.GLTFLoader||!T.
             return createImageBitmap(bl,{premultiplyAlpha:'none',colorSpaceConversion:'none'}).catch(()=>createImageBitmap(bl))}).then(bmp=>{const t=new T.Texture(bmp);t.needsUpdate=true;t.userData.mimeType=d.mimeType;return t});
           return parser.sourceCache[si].then(t=>t.clone())};
         return {name:'SS_images_in_memory'}});
-      ld.parse(u.buffer,'',done,fail)}).catch(fail);
+      ld.parse(u.buffer,'',done,fail)};
+    if(window.SS_GLB&&window.SS_GLB[k])fromB64(window.SS_GLB[k]);   // the desktop app keeps the models in models.js beside the page
+    else if(/\.json$/.test(URL))fetch(URL).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json()}).then(j=>fromB64(j.glb)).catch(fail);
     else new T.GLTFLoader().load(URL,done,undefined,fail)}catch(e){fail(e)}}
 const SHOE_WHITE='#f4f6fa',VIS_SHOES=['#f4f6fa','#2a2c36','#8a93a6','#b5653a'];
 /* what they wear: the Locker look for you, role clothes for everyone else */
